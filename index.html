@@ -1,0 +1,1773 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Life</title>
+</head><body>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0a0613;
+  --panel: #150f27;
+  --panel2: #1d1535;
+  --line: rgba(167, 139, 250, .14);
+  --text: #eee9fb;
+  --muted: #8e86ab;
+  --p1: #a855f7;
+  --p2: #7c3aed;
+  --p3: #5b21b6;
+  --green: #34d399;
+  --red: #fb7185;
+  --amber: #fbbf24;
+  --radius: 16px;
+  --ease: cubic-bezier(.22, .8, .3, 1);
+}
+
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; }
+body {
+  background:
+    radial-gradient(900px 520px at 88% -10%, rgba(124, 58, 237, .28), transparent 60%),
+    radial-gradient(700px 520px at -8% 108%, rgba(168, 85, 247, .18), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+[hidden] { display: none !important; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.ico { display: block; flex: none; }
+
+.bg-glow {
+  position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+  background: radial-gradient(40% 40% at 30% 30%, rgba(168, 85, 247, .12), transparent 70%),
+              radial-gradient(35% 35% at 75% 70%, rgba(99, 102, 241, .10), transparent 70%);
+  animation: drift 22s ease-in-out infinite alternate;
+}
+
+/* ---------- layout ---------- */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); height: 100%; position: relative; z-index: 1; }
+.sidebar {
+  display: flex; flex-direction: column; padding: 20px 16px 18px; min-height: 0;
+  background: linear-gradient(180deg, rgba(21, 15, 39, .94), rgba(12, 8, 24, .94));
+  border-right: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+}
+.brand { display: block; padding: 0 6px 20px; }
+.logo { width: 156px; height: auto; display: block; filter: drop-shadow(0 0 12px rgba(168, 85, 247, .65)); animation: glowPulse 4s ease-in-out infinite; }
+.slogan { display: block; margin-top: 4px; text-align: center; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+
+#nav { position: relative; display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; }
+.nav-link {
+  position: relative; z-index: 1; display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; border-radius: 12px; color: var(--muted); font-weight: 600;
+  transition: color .2s, transform .25s var(--ease);
+}
+.nav-link:hover { color: var(--text); transform: translateX(4px); }
+.nav-link.active { color: #fff; }
+.nav-link .nav-badge { margin-left: auto; background: var(--p2); color: #fff; font-size: 11px; padding: 1px 8px; border-radius: 10px; }
+.nav-ind {
+  position: absolute; left: 0; right: 0; top: 0; height: 44px; border-radius: 12px; opacity: 0;
+  background: linear-gradient(90deg, #6d28d9, #4c1d95);
+  box-shadow: 0 8px 26px rgba(109, 40, 217, .5), inset 0 1px 0 rgba(255, 255, 255, .18);
+  transition: transform .4s var(--ease), height .4s var(--ease), opacity .25s;
+}
+.nav-ind.on { opacity: 1; }
+.nav-spacer { flex: 1; }
+
+#mini-dl { display: none; margin-bottom: 8px; }
+#mini-dl.on { display: block; animation: fadeUp .4s var(--ease) both; }
+.mini-card { display: grid; gap: 6px; padding: 12px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; }
+.mini-t { display: flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-s { color: var(--muted); font-size: 12px; }
+
+.content { overflow-y: auto; overflow-x: hidden; position: relative; scroll-behavior: smooth; min-width: 0; min-height: 0; }
+.content::-webkit-scrollbar { width: 10px; }
+.content::-webkit-scrollbar-thumb { background: #2a1f4a; border-radius: 6px; border: 2px solid var(--bg); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 16px;
+  padding: 14px 32px; background: rgba(10, 6, 19, .72); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.search {
+  flex: 1; max-width: 520px; min-width: 0; display: flex; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; color: var(--muted);
+  transition: border-color .25s, box-shadow .25s;
+}
+.search:focus-within { border-color: var(--p2); box-shadow: 0 0 0 4px rgba(124, 58, 237, .22); color: var(--text); }
+.search input { flex: 1; background: none; border: 0; color: var(--text); font: inherit; padding: 11px 0; outline: none; min-width: 0; }
+.proto-pill { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber); border: 1px solid rgba(251, 191, 36, .35); padding: 4px 10px; border-radius: 20px; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.icon-btn {
+  position: relative; width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+  transition: color .2s, transform .2s var(--ease), border-color .2s, background .2s;
+}
+.icon-btn:hover { color: var(--text); transform: translateY(-2px); border-color: rgba(167, 139, 250, .4); }
+.icon-btn.heart.on { color: #f472b6; border-color: rgba(244, 114, 182, .5); background: rgba(244, 114, 182, .12); }
+.icon-btn.heart.on svg { fill: currentColor; }
+.icon-btn.pop { animation: pop .45s var(--ease); }
+.bell-dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 3px var(--panel); animation: pulse 1.8s infinite; }
+.badge { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(135deg, var(--p1), var(--p2)); color: #fff; font-size: 11px; box-shadow: 0 0 0 3px var(--bg); animation: pop .4s var(--ease); }
+.profile { display: flex; align-items: center; gap: 10px; padding: 4px 12px 4px 4px; border-radius: 14px; border: 1px solid transparent; transition: background .2s, border-color .2s; }
+.profile:hover { background: var(--panel); border-color: var(--line); }
+.profile .pname { font-weight: 700; font-size: 14px; line-height: 1.1; }
+.profile .pstat { font-size: 12px; color: var(--green); display: flex; align-items: center; gap: 6px; }
+.profile .pstat::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+.notes-wrap { position: relative; }
+.notes { position: absolute; right: 0; top: 52px; width: 330px; max-width: calc(100vw - 32px); max-height: 380px; overflow: auto; background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 8px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6); transform-origin: top right; }
+.notes:not([hidden]) { animation: dropIn .28s var(--ease); }
+.notes h4 { padding: 8px 10px; font-size: 13px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.note { padding: 10px; border-radius: 10px; font-size: 14px; display: grid; gap: 2px; }
+.note:hover { background: rgba(124, 58, 237, .14); }
+.note small { color: var(--muted); }
+.notes .none { padding: 18px 10px; color: var(--muted); text-align: center; }
+
+.view { padding: 28px 32px 70px; max-width: 1280px; margin: 0 auto; }
+.view-enter .reveal { animation: fadeUp .55s var(--ease) both; animation-delay: calc(var(--i, 0) * 55ms); }
+
+h1 { font-size: 30px; letter-spacing: -.3px; }
+h2 { font-size: 20px; }
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 34px 0 14px; }
+.section-head a { color: var(--p1); font-size: 14px; font-weight: 600; transition: transform .2s var(--ease); }
+.section-head a:hover { transform: translateX(4px); }
+.muted { color: var(--muted); }
+
+/* ---------- botões ---------- */
+.btn {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 12px; padding: 11px 22px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, var(--p1), var(--p2) 60%, var(--p3));
+  background-size: 160% 100%; background-position: 0 0;
+  box-shadow: 0 10px 26px rgba(124, 58, 237, .38);
+  transition: transform .2s var(--ease), box-shadow .25s, background-position .4s var(--ease), filter .2s;
+}
+.btn:hover { transform: translateY(-2px); background-position: 100% 0; box-shadow: 0 14px 34px rgba(124, 58, 237, .55); }
+.btn:active { transform: translateY(0) scale(.97); }
+.btn:focus-visible, .icon-btn:focus-visible, .chip:focus-visible, .tab:focus-visible, .nav-link:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 2px; }
+.btn.lg { padding: 14px 30px; font-size: 16px; }
+.btn.ghost { background: var(--panel2); box-shadow: none; border: 1px solid var(--line); color: var(--text); }
+.btn.ghost:hover { border-color: rgba(167, 139, 250, .45); box-shadow: none; }
+.btn.green { background: linear-gradient(135deg, #34d399, #059669); box-shadow: 0 10px 26px rgba(16, 185, 129, .3); }
+.btn.sm { padding: 8px 16px; font-size: 14px; border-radius: 10px; }
+.btn:disabled { opacity: .5; cursor: default; transform: none; }
+.ripple { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .45); transform: scale(0); animation: ripple .65s linear; pointer-events: none; }
+
+/* ---------- arte dos jogos (sem imagens externas) ---------- */
+.art {
+  position: relative; overflow: hidden; width: 100%; height: 100%;
+  background:
+    radial-gradient(circle at 24% 22%, rgba(255, 255, 255, .26), transparent 46%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .035) 0 2px, transparent 2px 14px),
+    linear-gradient(135deg, var(--c1), var(--c2));
+  display: grid; place-items: center; text-align: center;
+}
+.art::before {
+  content: ""; position: absolute; inset: -30%;
+  background: radial-gradient(circle at 70% 80%, rgba(0, 0, 0, .45), transparent 55%);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+.art-emoji { position: relative; font-size: 46px; line-height: 1; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .5)); animation: floaty 5s ease-in-out infinite; }
+.art-title { position: absolute; left: 10px; right: 10px; bottom: 10px; font-weight: 800; font-size: 14px; text-shadow: 0 2px 10px rgba(0, 0, 0, .8); }
+.art.small .art-title, .art.thumb .art-title { display: none; }
+.art.thumb .art-emoji { font-size: 26px; }
+
+/* ---------- cartões ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
+.grid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; cursor: pointer;
+  transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
+  transition: transform .25s var(--ease), box-shadow .3s, border-color .3s;
+  will-change: transform; min-width: 0;
+}
+.card:hover { --ty: -7px; border-color: rgba(167, 139, 250, .5); box-shadow: 0 22px 50px rgba(0, 0, 0, .55), 0 0 36px rgba(124, 58, 237, .28); }
+.card-art { position: relative; height: 170px; overflow: hidden; }
+.card-art .art { transition: transform .6s var(--ease); }
+.card:hover .card-art .art { transform: scale(1.12); }
+.card-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .22) 50%, transparent 60%); transform: translateX(-120%); }
+.card:hover .card-art::after { transform: translateX(120%); transition: transform .9s var(--ease); }
+.card-body { padding: 12px 14px 14px; display: grid; gap: 4px; }
+.card-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-sub { color: var(--muted); font-size: 13px; }
+.card-price { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.price { font-weight: 800; }
+.old { color: var(--muted); text-decoration: line-through; font-size: 13px; }
+.disc-badge { background: linear-gradient(135deg, #34d399, #059669); color: #04130d; font-weight: 800; font-size: 12px; padding: 3px 8px; border-radius: 6px; }
+.disc { position: absolute; top: 10px; left: 10px; z-index: 2; background: linear-gradient(135deg, #34d399, #059669); color: #04130d; font-weight: 800; font-size: 13px; padding: 4px 9px; border-radius: 8px; box-shadow: 0 6px 16px rgba(0, 0, 0, .4); }
+.tag { display: inline-block; background: rgba(124, 58, 237, .16); color: #c4b5fd; border-radius: 6px; padding: 3px 10px; font-size: 12px; margin-right: 6px; }
+
+/* ---------- destaque (hero) ---------- */
+.home-top { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 18px; }
+.hero { position: relative; height: 380px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(0, 0, 0, .5); }
+.hero-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .8s var(--ease), visibility .8s; }
+.hero-slide.on { opacity: 1; visibility: visible; }
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 78% 35%, rgba(255, 255, 255, .22), transparent 40%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 16px),
+    linear-gradient(120deg, var(--c1), var(--c2));
+  transform: scale(1);
+}
+.hero-slide.on .hero-bg { animation: kenburns 9s ease-out both; }
+.hero-slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10, 6, 19, .92) 5%, rgba(10, 6, 19, .35) 55%, transparent); }
+.hero-emoji { position: absolute; right: 7%; top: 50%; transform: translateY(-50%); font-size: 190px; line-height: 1; z-index: 1; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, .55)); }
+.hero-slide.on .hero-emoji { animation: floaty 6s ease-in-out infinite, popIn .9s var(--ease) both; }
+.hero-copy { position: absolute; left: 36px; bottom: 44px; z-index: 2; max-width: 52%; display: grid; gap: 10px; }
+.hero-slide .hero-copy > * { opacity: 0; transform: translateX(-26px); }
+.hero-slide.on .hero-copy > * { animation: slideIn .7s var(--ease) both; }
+.hero-slide.on .hero-copy > *:nth-child(1) { animation-delay: .15s; }
+.hero-slide.on .hero-copy > *:nth-child(2) { animation-delay: .25s; }
+.hero-slide.on .hero-copy > *:nth-child(3) { animation-delay: .33s; }
+.hero-slide.on .hero-copy > *:nth-child(4) { animation-delay: .41s; }
+.hero-slide.on .hero-copy > *:nth-child(5) { animation-delay: .49s; }
+.hero-slide.on .hero-copy > *:nth-child(6) { animation-delay: .57s; }
+.pill { justify-self: start; background: linear-gradient(135deg, var(--p1), var(--p2)); font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 8px; letter-spacing: .5px; }
+.hero-title { font-size: 46px; line-height: 1.02; font-weight: 900; letter-spacing: -1px; text-shadow: 0 6px 30px rgba(0, 0, 0, .6); }
+.hero-meta { color: #c9c1e6; font-size: 14px; }
+.hero-tag { color: #ddd6f3; max-width: 420px; }
+.hero-price { display: flex; align-items: center; gap: 10px; font-size: 20px; }
+.hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hero-nav { position: absolute; right: 20px; bottom: 20px; z-index: 3; display: flex; gap: 8px; }
+.hero-nav .icon-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(10, 6, 19, .6); backdrop-filter: blur(8px); }
+.dots { position: absolute; left: 36px; bottom: 18px; z-index: 3; display: flex; gap: 8px; }
+.dot-b { width: 26px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .22); border: 0; padding: 0; overflow: hidden; position: relative; }
+.dot-b.on::after { content: ""; position: absolute; inset: 0; background: #fff; transform-origin: left; animation: fill 7s linear both; }
+.hero:hover .dot-b.on::after { animation-play-state: paused; }
+
+.side-list { display: grid; grid-template-rows: repeat(3, 1fr); gap: 14px; }
+.side-tile { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); cursor: pointer; transition: transform .3s var(--ease), box-shadow .3s; }
+.side-tile:hover { transform: translateX(-6px) scale(1.02); box-shadow: 0 16px 40px rgba(0, 0, 0, .5), 0 0 30px rgba(124, 58, 237, .3); }
+.side-tile .art { position: absolute; inset: 0; }
+.side-tile .art-title { font-size: 15px; }
+
+/* ---------- abas / chips ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.chip { background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 20px; padding: 6px 16px; font-size: 14px; transition: all .25s var(--ease); }
+.chip:hover { color: var(--text); transform: translateY(-2px); }
+.chip.on { background: linear-gradient(135deg, var(--p2), var(--p3)); color: #fff; border-color: transparent; box-shadow: 0 8px 20px rgba(124, 58, 237, .4); }
+select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; font: inherit; outline: none; }
+select:focus, input:focus, textarea:focus { border-color: var(--p2); box-shadow: 0 0 0 4px rgba(124, 58, 237, .2); }
+
+.tabs { position: relative; display: inline-flex; max-width: 100%; flex-wrap: wrap; gap: 6px; padding: 5px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 20px; }
+.tab { position: relative; z-index: 1; background: none; border: 0; padding: 8px 18px; border-radius: 10px; color: var(--muted); font-weight: 600; transition: color .2s; }
+.tab.on { color: #fff; }
+.tab-ind { position: absolute; top: 5px; bottom: 5px; left: 0; width: 80px; border-radius: 10px; background: linear-gradient(135deg, var(--p2), var(--p3)); box-shadow: 0 6px 18px rgba(124, 58, 237, .45); transition: transform .35s var(--ease), width .35s var(--ease); }
+
+/* ---------- listas ---------- */
+.row {
+  display: flex; align-items: center; gap: 16px; padding: 12px; margin-bottom: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  transition: transform .25s var(--ease), border-color .25s, box-shadow .25s;
+}
+.row:hover { transform: translateX(6px); border-color: rgba(167, 139, 250, .4); box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+.row .thumb { width: 96px; height: 56px; border-radius: 10px; overflow: hidden; flex: none; }
+.row .grow { flex: 1; min-width: 0; }
+.row .rtitle { font-weight: 700; cursor: pointer; }
+.row .rtitle:hover { color: #c4b5fd; }
+.row .actions { display: flex; align-items: center; gap: 8px; }
+.stats { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 20px; min-width: 150px; }
+.stat b { display: block; font-size: 26px; background: linear-gradient(135deg, #e9d5ff, var(--p1)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stat span { color: var(--muted); font-size: 13px; }
+
+.bar { display: block; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; width: 100%; }
+.bar > i { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .25s linear;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .22) 0 8px, transparent 8px 16px), linear-gradient(90deg, var(--p1), #60a5fa);
+  background-size: 32px 32px, 100% 100%; animation: stripes 1s linear infinite; }
+.dl-wrap { display: grid; gap: 4px; min-width: 240px; }
+.dl-wrap small { color: var(--muted); display: flex; justify-content: space-between; gap: 12px; }
+
+/* ---------- jogo ---------- */
+.back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 600; margin-bottom: 14px; transition: color .2s, transform .2s var(--ease); }
+.back:hover { color: var(--text); transform: translateX(-4px); }
+.banner { position: relative; height: 240px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); }
+.banner .hero-bg { animation: kenburns 12s ease-out both; }
+.banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg) 0%, transparent 70%); }
+.banner .hero-emoji { font-size: 150px; right: 10%; animation: floaty 6s ease-in-out infinite; }
+.game-head { position: relative; z-index: 2; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; margin: -90px 24px 0; align-items: end; }
+.cover { height: 260px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(255, 255, 255, .14); box-shadow: 0 24px 50px rgba(0, 0, 0, .6); }
+.ginfo { display: grid; gap: 10px; padding-bottom: 6px; min-width: 0; }
+.ginfo h1 { font-size: 36px; overflow-wrap: anywhere; }
+.buyline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.buyline .price { font-size: 24px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; min-width: 0; }
+.two-col { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; margin-top: 24px; }
+.panel h3 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.achv { width: 46px; height: 46px; display: grid; place-items: center; font-size: 22px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); filter: grayscale(1); opacity: .45; transition: transform .25s var(--ease); }
+.achv.on { filter: none; opacity: 1; background: rgba(124, 58, 237, .22); border-color: rgba(167, 139, 250, .6); box-shadow: 0 0 22px rgba(168, 85, 247, .45); }
+.achv:hover { transform: translateY(-4px) rotate(-6deg) scale(1.1); }
+.friend-line { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.shot { height: 130px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); transition: transform .3s var(--ease); }
+.shot:hover { transform: scale(1.05); }
+.req-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.req-panel { display: none; }
+.req-panel.on { display: block; animation: fadeUp .4s var(--ease) both; }
+.req-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.req-row:last-child { border-bottom: 0; }
+.req-row span:first-child { color: var(--muted); }
+
+/* ---------- amigos / comunidade ---------- */
+.avatar { position: relative; flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, hsl(var(--h) 70% 55%), hsl(calc(var(--h) + 40) 70% 38%)); }
+.avatar.lg { width: 48px; height: 48px; }
+.avatar .dot { position: absolute; right: -1px; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; border: 3px solid var(--bg); background: #64748b; }
+.dot.online, .dot.ingame { background: var(--green); }
+.dot.ingame { animation: pulse 2s infinite; }
+.dot.menu { background: #60a5fa; }
+.dot.away { background: var(--amber); }
+.friend { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); margin-bottom: 8px; transition: transform .25s var(--ease), border-color .25s; }
+.friend:hover { transform: translateX(6px); border-color: rgba(167, 139, 250, .4); }
+.friend .fname { font-weight: 700; }
+.friend .fstat { color: var(--muted); font-size: 13px; }
+.friend a.fstat:hover { color: #c4b5fd; }
+.post { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; display: grid; gap: 10px; transition: transform .25s var(--ease), border-color .25s; }
+.post:hover { transform: translateY(-3px); border-color: rgba(167, 139, 250, .4); }
+.post-head { display: flex; align-items: center; gap: 12px; }
+.like { justify-self: start; display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--line); border-radius: 20px; padding: 6px 14px; color: var(--muted); transition: all .25s var(--ease); }
+.like:hover { color: var(--text); }
+.like.on { color: #f472b6; border-color: rgba(244, 114, 182, .5); background: rgba(244, 114, 182, .1); }
+.like.on svg { fill: currentColor; }
+.like.pop svg { animation: pop .45s var(--ease); }
+
+/* ---------- formulários ---------- */
+form { display: grid; gap: 14px; max-width: 620px; }
+label.f { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+input[type="text"], input[type="number"], textarea {
+  background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; font: inherit; outline: none; transition: border-color .2s, box-shadow .2s; min-width: 0;
+}
+textarea { min-height: 110px; resize: vertical; }
+form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
+.switch input { display: none; }
+.switch .track { position: relative; flex: none; width: 52px; height: 28px; border-radius: 14px; background: #2a2146; transition: background .3s; cursor: pointer; }
+.switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .3s var(--ease); }
+.switch input:checked + .track { background: var(--p2); }
+.switch input:checked + .track::after { transform: translateX(24px); }
+
+.empty { color: var(--muted); padding: 60px 0; text-align: center; display: grid; gap: 14px; justify-items: center; }
+.empty .big { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: var(--panel2); animation: floaty 4s ease-in-out infinite; }
+.error { color: #ff8a80; }
+.total { display: flex; justify-content: flex-end; align-items: center; gap: 22px; margin-top: 20px; font-size: 20px; flex-wrap: wrap; }
+.note-line { text-align: right; color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 100; padding: 13px 22px; border-radius: 14px; max-width: calc(100vw - 32px);
+  background: rgba(29, 21, 53, .96); border: 1px solid rgba(167, 139, 250, .4); backdrop-filter: blur(10px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .6), 0 0 30px rgba(124, 58, 237, .3);
+  transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: transform .45s var(--ease), opacity .3s;
+}
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+/* ---------- animações ---------- */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(-50%) scale(.6) rotate(-8deg); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes floaty { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+@keyframes drift { from { transform: translate(-3%, -2%) scale(1); } to { transform: translate(4%, 3%) scale(1.08); } }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.12); } }
+@keyframes glowPulse { 0%, 100% { filter: drop-shadow(0 0 10px rgba(168, 85, 247, .5)); } 50% { filter: drop-shadow(0 0 22px rgba(168, 85, 247, .95)); } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, .55); } 70% { box-shadow: 0 0 0 9px rgba(52, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); } }
+@keyframes dropIn { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes stripes { to { background-position: 32px 0, 0 0; } }
+
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; }
+.reduce-motion .hero-slide .hero-copy > * { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .hero-slide .hero-copy > * { opacity: 1; transform: none; }
+}
+
+/* ---------- telas menores ---------- */
+@media (max-width: 1080px) {
+  .home-top { grid-template-columns: minmax(0, 1fr); }
+  .side-list { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 110px; }
+  .grid.five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .two-col { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 72px minmax(0, 1fr); }
+  .slogan, .nav-link span:not(.nav-ico) { display: none; }
+  .sidebar { padding: 16px 8px; }
+  .brand { padding: 0 0 16px; }
+  .logo { width: 56px; }
+  .nav-link { justify-content: center; padding: 12px; }
+  .nav-ind { left: 0; right: 0; }
+  .topbar { padding: 12px 16px; gap: 10px; }
+  .top-actions { gap: 8px; }
+  .proto-pill, .profile .ptext { display: none; }
+  .view { padding: 20px 16px 60px; }
+  .hero-title { font-size: 32px; }
+  .hero-emoji { font-size: 120px; }
+  .hero-copy { max-width: 70%; left: 20px; }
+  .game-head { grid-template-columns: minmax(0, 1fr); margin: -60px 8px 0; }
+  .cover { height: 170px; width: 170px; }
+  .grid.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .hero { height: 460px; }
+  .hero-emoji { font-size: 84px; right: 6%; top: 24%; }
+  .hero-copy { max-width: calc(100% - 36px); left: 18px; bottom: 44px; }
+  .hero-title { font-size: 28px; }
+  .hero-tag, .hero-meta { display: none; }
+  .hero-nav { display: none; }
+  .dots { left: 18px; }
+  .dot-b { height: 6px; }
+  .side-list { grid-template-rows: 84px; gap: 8px; }
+  .side-tile .art-emoji { font-size: 28px; }
+  .side-tile .art-title { font-size: 11px; left: 4px; right: 4px; bottom: 6px; }
+  .grid, .grid.five { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .card-art { height: 116px; }
+  h1 { font-size: 24px; }
+  .ginfo h1 { font-size: 26px; }
+  .banner { height: 170px; }
+  .banner .hero-emoji { font-size: 64px; right: 8%; top: 40%; }
+  .row { flex-wrap: wrap; gap: 10px; }
+  .row .thumb { width: 72px; height: 44px; }
+  .row .actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .dl-wrap { min-width: 0; flex: 1; }
+  .req-row { grid-template-columns: 110px minmax(0, 1fr); }
+  form .two { grid-template-columns: minmax(0, 1fr); }
+  .stat { min-width: 0; flex: 1; padding: 12px 14px; }
+  .shots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .shot { height: 80px; }
+  .toast { bottom: 16px; }
+}
+
+</style>
+<div class="bg-glow" aria-hidden="true"></div>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="#/" aria-label="Life - início">
+        <svg class="logo" viewBox="0 0 170 60" aria-hidden="true">
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e9d5ff"/>
+              <stop offset="0.5" stop-color="#a855f7"/>
+              <stop offset="1" stop-color="#6d28d9"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="85" cy="32" rx="78" ry="17" fill="none" stroke="url(#lg)" stroke-width="3" transform="rotate(-9 85 32)" opacity=".85"/>
+          <text x="86" y="43" text-anchor="middle" font-size="38" font-weight="900" font-style="italic" letter-spacing="2" fill="url(#lg)" font-family="'Segoe UI','Arial Black',Arial,sans-serif">LIFE</text>
+        </svg>
+        <span class="slogan">Jogue · Conecte · Viva</span>
+      </a>
+      <nav id="nav" aria-label="Principal"></nav>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <label class="search">
+          <span id="search-ico"></span>
+          <input id="gsearch" type="search" placeholder="Buscar jogos, estúdios, gêneros..." autocomplete="off">
+        </label>
+        <span class="proto-pill" title="Os jogos, amigos e posts são fictícios e o pagamento é simulado.">Protótipo</span>
+        <div class="top-actions">
+          <div class="notes-wrap">
+            <button class="icon-btn" id="bell" aria-label="Notificações"><span id="bell-ico"></span><i class="bell-dot" id="bell-dot" hidden></i></button>
+            <div class="notes" id="notes" hidden></div>
+          </div>
+          <a class="icon-btn" id="cart-link" href="#/cart" aria-label="Carrinho"><span id="cart-ico"></span><b class="badge" id="cart-badge" hidden>0</b></a>
+          <a class="profile" id="profile-chip" href="#/settings"></a>
+        </div>
+      </header>
+      <main id="view" class="view"></main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>// Lógica da loja Life, sem dependência de Node nem de navegador.
+// É usada pelo servidor (server.js, com arquivos) e pela versão de
+// demonstração (dentro da página, com dados em memória).
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.LifeCore = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var PALETTES = [
+    ['#0e7490', '#4338ca'],
+    ['#9f1239', '#7c2d12'],
+    ['#166534', '#0f766e'],
+    ['#6d28d9', '#be185d'],
+    ['#1d4ed8', '#0369a1'],
+    ['#a16207', '#b91c1c'],
+  ];
+  var EMOJIS = ['🎮', '🕹️', '👾', '🚀', '🧩', '⚔️', '🌌', '🐉'];
+
+  // Requisitos de sistema por "nível" de exigência do jogo
+  var REQ = {
+    1: {
+      min: { cpu: 'Intel Core i3-6100 / AMD Ryzen 3 1200', ram: '4 GB', gpu: 'Intel HD 530 ou equivalente' },
+      rec: { cpu: 'Intel Core i5-8400 / AMD Ryzen 5 2600', ram: '8 GB', gpu: 'GTX 1050 ou equivalente' },
+    },
+    2: {
+      min: { cpu: 'Intel Core i5-8400 / AMD Ryzen 5 1600', ram: '8 GB', gpu: 'GTX 1050 Ti ou equivalente' },
+      rec: { cpu: 'Intel Core i7-9700 / AMD Ryzen 7 3700X', ram: '16 GB', gpu: 'GTX 1660 Super ou equivalente' },
+    },
+    3: {
+      min: { cpu: 'Intel Core i7-8700 / AMD Ryzen 5 3600', ram: '16 GB', gpu: 'GTX 1660 Ti ou equivalente' },
+      rec: { cpu: 'Intel Core i7-12700 / AMD Ryzen 7 5800X', ram: '32 GB', gpu: 'RTX 3070 ou equivalente' },
+    },
+  };
+
+  function slugify(text) {
+    return String(text)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 50);
+  }
+
+  // Completa campos que jogos antigos ou publicados pelo portal podem não ter
+  function normalizeGame(g) {
+    var tier = [1, 2, 3].indexOf(g.tier) >= 0 ? g.tier : 1;
+    var price = Number(g.price) || 0;
+    var orig = Number(g.originalPrice) > price ? Number(g.originalPrice) : price;
+    var discount = orig > price ? Math.round((1 - price / orig) * 100) : 0;
+    var so = 'Windows 10 64-bit ou superior';
+    var disco = Math.max(1, Math.ceil(Number(g.sizeGB) || 1)) + ' GB';
+    return Object.assign({}, g, {
+      tier: tier,
+      price: price,
+      originalPrice: orig,
+      discount: discount,
+      tagline: g.tagline || '',
+      featured: !!g.featured,
+      achievementsTotal: Number.isFinite(g.achievementsTotal) ? g.achievementsTotal : 20,
+      requirements: {
+        min: Object.assign({ so: so }, REQ[tier].min, { disco: disco }),
+        rec: Object.assign({ so: so }, REQ[tier].rec, { disco: disco }),
+      },
+    });
+  }
+
+  // Os jogos de exemplo vêm sempre do seed (ficam atualizados), mas os jogos
+  // publicados pelo usuário, que não estão no seed, são preservados.
+  function mergeCatalog(seedGames, existing) {
+    var ids = {};
+    seedGames.forEach(function (g) { ids[g.id] = true; });
+    return seedGames.concat((existing || []).filter(function (g) { return g && !ids[g.id]; }));
+  }
+
+  // Estado do jogador, sempre completado com os campos novos
+  function normalizeState(s) {
+    s = s || {};
+    var lib = Array.isArray(s.library) ? s.library : [];
+    return {
+      library: lib
+        .filter(function (e) { return e && typeof e.id === 'string'; })
+        .map(function (e) {
+          return {
+            id: e.id,
+            purchasedAt: e.purchasedAt || '',
+            installed: !!e.installed,
+            playMinutes: Number(e.playMinutes) || 0,
+            achievementsUnlocked: Number(e.achievementsUnlocked) || 0,
+          };
+        }),
+      favorites: Array.isArray(s.favorites) ? s.favorites.filter(function (x) { return typeof x === 'string'; }) : [],
+      profile: { name: String((s.profile && s.profile.name) || 'Jogador').slice(0, 24) },
+      settings: { reduceMotion: !!(s.settings && s.settings.reduceMotion) },
+    };
+  }
+
+  // store = { games:{read,write}, state:{read,write}, friends:[], community:[] }
+  function createRoutes(store) {
+    var friends = store.friends;
+    var community = store.community;
+    var readGames = function () { return store.games.read().map(normalizeGame); };
+    var readState = function () { return normalizeState(store.state.read()); };
+    var writeState = function (s) { store.state.write(s); };
+
+    var routes = [];
+    var route = function (method, pattern, handler) {
+      var keys = [];
+      var re = new RegExp('^' + pattern.replace(/:([a-zA-Z]+)/g, function (_, k) { keys.push(k); return '([^/]+)'; }) + '$');
+      routes.push({ method: method, re: re, keys: keys, handler: handler });
+    };
+
+    // Lista de jogos: busca (?q=), gênero (?genre=) e ordem (?sort=)
+    route('GET', '/api/games', function (ctx) {
+      var q = String(ctx.query.get('q') || '').trim().toLowerCase();
+      var genre = String(ctx.query.get('genre') || '').trim().toLowerCase();
+      var sort = String(ctx.query.get('sort') || 'rating');
+      var games = readGames();
+      if (q) {
+        games = games.filter(function (g) {
+          return g.title.toLowerCase().indexOf(q) >= 0 ||
+            g.developer.toLowerCase().indexOf(q) >= 0 ||
+            g.genres.some(function (x) { return x.toLowerCase().indexOf(q) >= 0; });
+        });
+      }
+      if (genre) {
+        games = games.filter(function (g) { return g.genres.some(function (x) { return x.toLowerCase() === genre; }); });
+      }
+      var sorters = {
+        rating: function (a, b) { return b.rating - a.rating; },
+        'price-asc': function (a, b) { return a.price - b.price; },
+        'price-desc': function (a, b) { return b.price - a.price; },
+        discount: function (a, b) { return b.discount - a.discount; },
+        'new': function (a, b) { return String(b.releaseDate).localeCompare(String(a.releaseDate)); },
+        az: function (a, b) { return a.title.localeCompare(b.title, 'pt-BR'); },
+      };
+      games.sort(sorters[sort] || sorters.rating);
+      return [200, games];
+    });
+
+    route('GET', '/api/genres', function () {
+      var set = {};
+      readGames().forEach(function (g) { g.genres.forEach(function (x) { set[x] = true; }); });
+      return [200, Object.keys(set).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); })];
+    });
+
+    route('GET', '/api/games/:id', function (ctx) {
+      var game = readGames().find(function (g) { return g.id === ctx.params.id; });
+      if (!game) return [404, { error: 'Jogo não encontrado.' }];
+      return [200, game];
+    });
+
+    // Amigos que jogam este jogo
+    route('GET', '/api/games/:id/friends', function (ctx) {
+      if (!readGames().some(function (g) { return g.id === ctx.params.id; })) return [404, { error: 'Jogo não encontrado.' }];
+      return [200, friends.filter(function (f) { return f.game === ctx.params.id; })];
+    });
+
+    // Portal do desenvolvedor: publicar um jogo novo
+    route('POST', '/api/games', function (ctx) {
+      var b = ctx.body || {};
+      var title = String(b.title || '').trim();
+      var developer = String(b.developer || '').trim();
+      var description = String(b.description || '').trim();
+      var price = Number(b.price);
+      var sizeGB = Number(b.sizeGB);
+      var genres = String(b.genres || '')
+        .split(',')
+        .map(function (x) { return x.trim().slice(0, 30); })
+        .filter(Boolean)
+        .slice(0, 4);
+
+      if (!title || title.length > 60) return [400, { error: 'Título é obrigatório (máx. 60 caracteres).' }];
+      if (!developer || developer.length > 60) return [400, { error: 'Nome do desenvolvedor é obrigatório (máx. 60 caracteres).' }];
+      if (!description || description.length > 1000) return [400, { error: 'Descrição é obrigatória (máx. 1000 caracteres).' }];
+      if (!Number.isFinite(price) || price < 0 || price > 1000) return [400, { error: 'Preço deve estar entre 0 e 1000.' }];
+      if (!Number.isFinite(sizeGB) || sizeGB <= 0 || sizeGB > 200) return [400, { error: 'Tamanho deve estar entre 0,1 e 200 GB.' }];
+      if (genres.length === 0) return [400, { error: 'Informe pelo menos um gênero.' }];
+
+      var games = store.games.read();
+      var base = slugify(title) || 'jogo';
+      var id = base;
+      var n = 2;
+      while (games.some(function (g) { return g.id === id; })) id = base + '-' + (n++);
+
+      var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
+      var game = {
+        id: id,
+        title: title,
+        developer: developer,
+        price: Math.round(price * 100) / 100,
+        genres: genres,
+        tagline: String(b.tagline || '').trim().slice(0, 100),
+        description: description,
+        rating: 0,
+        sizeGB: Math.round(sizeGB * 10) / 10,
+        releaseDate: new Date().toISOString().slice(0, 10),
+        emoji: pick(EMOJIS),
+        colors: pick(PALETTES),
+      };
+      games.push(game);
+      store.games.write(games);
+      return [201, normalizeGame(game)];
+    });
+
+    // Biblioteca do jogador (jogos comprados) já com os dados do jogo
+    route('GET', '/api/library', function () {
+      var games = readGames();
+      var state = readState();
+      var items = state.library
+        .map(function (entry) {
+          var game = games.find(function (g) { return g.id === entry.id; });
+          return game ? Object.assign({}, entry, { favorite: state.favorites.indexOf(entry.id) >= 0, game: game }) : null;
+        })
+        .filter(Boolean);
+      return [200, items];
+    });
+
+    // Compra simulada: nenhum dinheiro real, nenhum pagamento de verdade
+    route('POST', '/api/purchase', function (ctx) {
+      var ids = Array.isArray(ctx.body && ctx.body.ids) ? ctx.body.ids : [];
+      if (ids.length === 0) return [400, { error: 'Carrinho vazio.' }];
+
+      var games = readGames();
+      var state = readState();
+      var unique = ids.map(String).filter(function (id, i, a) { return a.indexOf(id) === i; });
+
+      for (var i = 0; i < unique.length; i++) {
+        var id = unique[i];
+        if (!games.some(function (g) { return g.id === id; })) return [400, { error: 'Jogo inexistente: ' + id }];
+        if (state.library.some(function (e) { return e.id === id; })) return [400, { error: 'Você já possui um dos jogos do carrinho.' }];
+      }
+
+      var total = unique.reduce(function (sum, id) { return sum + games.find(function (g) { return g.id === id; }).price; }, 0);
+      var now = new Date().toISOString();
+      unique.forEach(function (id) {
+        state.library.push({ id: id, purchasedAt: now, installed: false, playMinutes: 0, achievementsUnlocked: 0 });
+      });
+      writeState(state);
+      return [201, { purchased: unique, total: Math.round(total * 100) / 100 }];
+    });
+
+    // Instalar / desinstalar (simulado: só marca o estado)
+    var setInstalled = function (value) {
+      return function (ctx) {
+        var state = readState();
+        var entry = state.library.find(function (e) { return e.id === ctx.params.id; });
+        if (!entry) return [404, { error: 'Você não possui este jogo.' }];
+        entry.installed = value;
+        writeState(state);
+        return [200, entry];
+      };
+    };
+    route('POST', '/api/library/:id/install', setInstalled(true));
+    route('DELETE', '/api/library/:id/install', setInstalled(false));
+
+    // Sessão de jogo simulada: soma tempo de jogo e pode liberar conquistas
+    route('POST', '/api/library/:id/play', function (ctx) {
+      var state = readState();
+      var entry = state.library.find(function (e) { return e.id === ctx.params.id; });
+      if (!entry) return [404, { error: 'Você não possui este jogo.' }];
+      if (!entry.installed) return [400, { error: 'Instale o jogo antes de jogar.' }];
+      var game = readGames().find(function (g) { return g.id === ctx.params.id; });
+      var minutes = 15 + Math.floor(Math.random() * 76);
+      var before = entry.achievementsUnlocked;
+      entry.playMinutes += minutes;
+      entry.achievementsUnlocked = Math.min(game.achievementsTotal, before + Math.floor(Math.random() * 3));
+      writeState(state);
+      return [200, { minutes: minutes, newAchievements: entry.achievementsUnlocked - before, entry: entry }];
+    });
+
+    // Favoritos (serve para jogos que o jogador tem ou quer ter)
+    route('GET', '/api/favorites', function () { return [200, readState().favorites]; });
+    route('POST', '/api/favorites/:id', function (ctx) {
+      if (!readGames().some(function (g) { return g.id === ctx.params.id; })) return [404, { error: 'Jogo não encontrado.' }];
+      var state = readState();
+      if (state.favorites.indexOf(ctx.params.id) < 0) state.favorites.push(ctx.params.id);
+      writeState(state);
+      return [200, state.favorites];
+    });
+    route('DELETE', '/api/favorites/:id', function (ctx) {
+      var state = readState();
+      state.favorites = state.favorites.filter(function (x) { return x !== ctx.params.id; });
+      writeState(state);
+      return [200, state.favorites];
+    });
+
+    // Amigos e comunidade (dados fictícios de exemplo)
+    route('GET', '/api/friends', function () { return [200, friends]; });
+    route('GET', '/api/community', function () { return [200, community]; });
+
+    // Perfil e configurações
+    route('GET', '/api/profile', function () {
+      var s = readState();
+      return [200, { name: s.profile.name, reduceMotion: s.settings.reduceMotion }];
+    });
+    route('PUT', '/api/profile', function (ctx) {
+      var b = ctx.body || {};
+      var state = readState();
+      if (b.name !== undefined) {
+        var name = String(b.name).trim();
+        if (!name || name.length > 24) return [400, { error: 'O nome deve ter de 1 a 24 caracteres.' }];
+        state.profile.name = name;
+      }
+      if (b.reduceMotion !== undefined) state.settings.reduceMotion = !!b.reduceMotion;
+      writeState(state);
+      return [200, { name: state.profile.name, reduceMotion: state.settings.reduceMotion }];
+    });
+
+    return routes;
+  }
+
+  // Procura a rota que atende o método e o caminho; devolve { route, params } ou null
+  function match(routes, method, pathname) {
+    for (var i = 0; i < routes.length; i++) {
+      var r = routes[i];
+      if (r.method !== method) continue;
+      var m = r.re.exec(pathname);
+      if (!m) continue;
+      var params = {};
+      r.keys.forEach(function (k, j) { params[k] = decodeURIComponent(m[j + 1]); });
+      return { route: r, params: params };
+    }
+    return null;
+  }
+
+  return {
+    normalizeGame: normalizeGame,
+    normalizeState: normalizeState,
+    mergeCatalog: mergeCatalog,
+    createRoutes: createRoutes,
+    match: match,
+  };
+});
+</script>
+<script>
+(function () {
+  'use strict';
+  var seed = {"games":[{"id":"sertao-neon","title":"Sertão Neon","developer":"Estúdio Fictício B","price":79.9,"originalPrice":99.9,"genres":["Ação","Aventura"],"tagline":"Um futuro cyberpunk onde o sertão nunca dorme.","description":"Cruze cidades flutuantes e feiras de néon num sertão do futuro. Hackeie, lute e descubra quem controla a última fonte de água. Jogo fictício de exemplo.","rating":92,"sizeGB":38,"releaseDate":"2025-09-02","emoji":"🌵","colors":["#0e7490","#7c3aed"],"featured":true,"achievementsTotal":48,"tier":3},{"id":"ultimo-farol","title":"Último Farol","developer":"Estúdio Fictício H","price":44.9,"originalPrice":59.9,"genres":["Terror","Exploração"],"tagline":"Um faroleiro, uma ilha e algo que respira no mar.","description":"Mantenha a luz acesa durante a noite enquanto algo se aproxima das rochas. Jogo fictício de exemplo.","rating":90,"sizeGB":15.7,"releaseDate":"2026-02-05","emoji":"🗼","colors":["#1e3a8a","#0b1020"],"featured":true,"achievementsTotal":30,"tier":2},{"id":"oasis-2099","title":"Oásis 2099","developer":"Estúdio Fictício I","price":129.9,"originalPrice":159.9,"genres":["Ficção científica","Ação"],"tagline":"O último oásis da Terra tem dono. Tome de volta.","description":"Em 2099, a água vale mais que ouro. Lidere uma equipe de rebeldes em missões táticas pelo deserto. Jogo fictício de exemplo.","rating":89,"sizeGB":64.2,"releaseDate":"2026-05-20","emoji":"🛰️","colors":["#c2410c","#4c1d95"],"featured":true,"achievementsTotal":60,"tier":3},{"id":"brasa-viva","title":"Brasa Viva","developer":"Estúdio Fictício J","price":89.9,"originalPrice":119.9,"genres":["Ação","Mundo aberto"],"tagline":"Atravesse um mundo em chamas e reacenda a esperança.","description":"Um mundo aberto devastado por incêndios eternos. Domine o fogo para sobreviver e reconstruir. Jogo fictício de exemplo.","rating":84,"sizeGB":41.3,"releaseDate":"2025-11-12","emoji":"🔥","colors":["#b91c1c","#7c2d12"],"featured":true,"achievementsTotal":44,"tier":3},{"id":"neblina-vermelha","title":"Neblina Vermelha","developer":"Estúdio Fictício A","price":49.9,"originalPrice":79.9,"genres":["Terror","Cooperativo"],"tagline":"Quatro amigos, uma vila e uma neblina que não perdoa.","description":"Quatro amigos ficam presos numa vila coberta por neblina vermelha. Explorem, sobrevivam juntos e descubram o que mora na névoa. Jogo fictício de exemplo.","rating":87,"sizeGB":12.4,"releaseDate":"2025-03-14","emoji":"🌫️","colors":["#9f1239","#2a0a1f"],"featured":false,"achievementsTotal":32,"tier":2},{"id":"mandacaru-tactics","title":"Mandacaru Tactics","developer":"Estúdio Fictício F","price":59.9,"originalPrice":74.9,"genres":["Estratégia"],"tagline":"Cada turno conta num deserto que respira.","description":"Estratégia por turnos em um deserto vivo, onde o clima muda as regras do campo de batalha. Jogo fictício de exemplo.","rating":85,"sizeGB":9.1,"releaseDate":"2025-04-22","emoji":"🏜️","colors":["#a16207","#365314"],"featured":false,"achievementsTotal":36,"tier":2},{"id":"eco-do-vale","title":"Eco do Vale","developer":"Estúdio Fictício K","price":39.9,"originalPrice":39.9,"genres":["Aventura","Exploração"],"tagline":"Cada som revela um segredo escondido no vale.","description":"Explore um vale onde o som molda o mundo. Cante, ouça e desvende o mistério das montanhas. Jogo fictício de exemplo.","rating":82,"sizeGB":7.6,"releaseDate":"2025-07-18","emoji":"🏔️","colors":["#0f766e","#1e1b4b"],"featured":false,"achievementsTotal":26,"tier":2},{"id":"torre-de-sal","title":"Torre de Sal","developer":"Estúdio Fictício C","price":19.9,"originalPrice":19.9,"genres":["Puzzle"],"tagline":"Suba andar por andar resolvendo enigmas de cristal.","description":"Suba uma torre cristalizada resolvendo enigmas de luz e sal. Jogo fictício de exemplo.","rating":81,"sizeGB":1.2,"releaseDate":"2024-11-20","emoji":"🧂","colors":["#475569","#38bdf8"],"featured":false,"achievementsTotal":20,"tier":1},{"id":"caldeirao-de-estrelas","title":"Caldeirão de Estrelas","developer":"Estúdio Fictício G","price":27.5,"originalPrice":27.5,"genres":["Casual","Puzzle"],"tagline":"Misture ingredientes cósmicos e descubra receitas.","description":"Misture ingredientes cósmicos, descubra receitas e abra restaurantes em outras galáxias. Jogo fictício de exemplo.","rating":79,"sizeGB":2.3,"releaseDate":"2025-08-11","emoji":"🍲","colors":["#4338ca","#a21caf"],"featured":false,"achievementsTotal":24,"tier":1},{"id":"rio-acima","title":"Rio Acima","developer":"Estúdio Fictício D","price":0,"originalPrice":0,"genres":["Aventura","Exploração"],"tagline":"Uma viagem tranquila rio acima, rumo à nascente.","description":"Navegue por um rio misterioso rumo à nascente, conhecendo ribeirinhos e criaturas pelo caminho. Jogo gratuito fictício de exemplo.","rating":76,"sizeGB":3.8,"releaseDate":"2025-01-08","emoji":"🛶","colors":["#166534","#0f766e"],"featured":false,"achievementsTotal":18,"tier":1},{"id":"lotus-arena","title":"Lótus Arena","developer":"Estúdio Fictício L","price":0,"originalPrice":0,"genres":["Competitivo","Multiplayer"],"tagline":"Partidas rápidas, times de cinco e muita rivalidade.","description":"Arena competitiva 5 contra 5 com partidas de dez minutos. Gratuito para jogar. Jogo fictício de exemplo.","rating":74,"sizeGB":18.9,"releaseDate":"2026-01-15","emoji":"🪷","colors":["#be185d","#312e81"],"featured":false,"achievementsTotal":40,"tier":2},{"id":"forro-turbo","title":"Forró Turbo","developer":"Estúdio Fictício E","price":34.9,"originalPrice":49.9,"genres":["Corrida","Casual"],"tagline":"Corridas aceleradas ao som de sanfona.","description":"Corridas aceleradas por estradas de terra e asfalto ao som de muita sanfona. Jogo fictício de exemplo.","rating":70,"sizeGB":6.5,"releaseDate":"2025-06-30","emoji":"🏎️","colors":["#b45309","#be123c"],"featured":false,"achievementsTotal":22,"tier":2}],"friends":[{"id":"bia","name":"Bia","status":"ingame","game":"sertao-neon"},{"id":"caio","name":"Caio","status":"ingame","game":"neblina-vermelha"},{"id":"duda","name":"Duda","status":"menu","game":"lotus-arena"},{"id":"enzo","name":"Enzo","status":"online"},{"id":"fabi","name":"Fabi","status":"away"},{"id":"gabi","name":"Gabi","status":"ingame","game":"sertao-neon"},{"id":"lia","name":"Lia","status":"ingame","game":"eco-do-vale"},{"id":"hugo","name":"Hugo","status":"offline","game":"oasis-2099","lastSeen":"há 2h"},{"id":"iara","name":"Iara","status":"offline","game":"ultimo-farol","lastSeen":"há 5h"},{"id":"juca","name":"Juca","status":"offline","game":"brasa-viva","lastSeen":"há 1 dia"}],"community":[{"id":"p1","author":"Bia","game":"sertao-neon","text":"Terminei a missão do mercado flutuante de primeira. Alguém topa co-op hoje à noite?","likes":42,"time":"há 12 min"},{"id":"p2","author":"Caio","game":"neblina-vermelha","text":"Dica: nunca dividam o grupo quando a neblina engrossar. Aprendi do pior jeito.","likes":31,"time":"há 40 min"},{"id":"p3","author":"Lia","game":"eco-do-vale","text":"Achei uma caverna secreta atrás da cachoeira do segundo vale. O eco lá é absurdo.","likes":58,"time":"há 1h"},{"id":"p4","author":"Duda","game":"lotus-arena","text":"Montando time pra ranqueada, preciso de um suporte e um tanque. Chama no chat!","likes":17,"time":"há 2h"},{"id":"p5","author":"Iara","game":"ultimo-farol","text":"Finalmente zerei sem deixar a luz apagar nenhuma vez. Foram três noites tensas.","likes":64,"time":"há 5h"},{"id":"p6","author":"Hugo","game":"oasis-2099","text":"O mapa do deserto ficou lindo demais. Melhor trilha sonora do ano, na minha opinião.","likes":25,"time":"há 1 dia"}]};
+  var KEY_G = 'life-demo-games', KEY_S = 'life-demo-state';
+  function load(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento: fica só na memória */ } }
+  function clear(k) { try { localStorage.removeItem(k); } catch (e) { /* nada */ } }
+  var clone = function (x) { return JSON.parse(JSON.stringify(x)); };
+
+  var games = LifeCore.mergeCatalog(seed.games, load(KEY_G) || []);
+  var state = LifeCore.normalizeState(load(KEY_S));
+  var store = {
+    games: { read: function () { return clone(games); }, write: function (l) { games = clone(l); save(KEY_G, games); } },
+    state: { read: function () { return clone(state); }, write: function (s) { state = clone(s); save(KEY_S, state); } },
+    friends: seed.friends,
+    community: seed.community
+  };
+  var routes = LifeCore.createRoutes(store);
+  var realFetch = window.fetch ? window.fetch.bind(window) : null;
+
+  window.fetch = function (input, init) {
+    var raw = typeof input === 'string' ? input : input.url;
+    var url = new URL(raw, 'http://localhost');
+    if (url.pathname.indexOf('/api/') !== 0) return realFetch ? realFetch(input, init) : Promise.reject(new Error('sem rede'));
+    var method = String((init && init.method) || 'GET').toUpperCase();
+    var found = LifeCore.match(routes, method, url.pathname);
+    var out;
+    if (!found) {
+      out = [404, { error: 'Rota não encontrada.' }];
+    } else {
+      var body = {};
+      try { body = init && init.body ? JSON.parse(init.body) : {}; } catch (e) { out = [400, { error: 'JSON inválido.' }]; }
+      if (!out) {
+        try { out = found.route.handler({ params: found.params, query: url.searchParams, body: body }); }
+        catch (e) { out = [400, { error: (e && e.message) || 'Requisição inválida.' }]; }
+      }
+    }
+    return Promise.resolve(new Response(JSON.stringify(out[1]), { status: out[0], headers: { 'Content-Type': 'application/json' } }));
+  };
+
+  window.LIFE_DEMO = {
+    reset: function () {
+      clear(KEY_G); clear(KEY_S); clear('life-cart');
+      games = clone(seed.games);
+      state = LifeCore.normalizeState(null);
+    }
+  };
+})();
+</script>
+<script>'use strict';
+// Interface do Life: início, loja, biblioteca, jogo, amigos, comunidade,
+// downloads, carrinho, publicar e configurações.
+
+const $view = document.getElementById('view');
+const $content = document.querySelector('.content');
+
+/* ============================ utilidades ============================ */
+const esc = (s) =>
+  String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const enc = encodeURIComponent;
+const brl = (n) => (n === 0 ? 'Grátis' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+const hours = (min) => (min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`);
+
+async function api(url, opts = {}) {
+  const init = { method: opts.method || 'GET', headers: { 'Content-Type': 'application/json' } };
+  if (opts.body !== undefined) init.body = JSON.stringify(opts.body);
+  const res = await fetch(url, init);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Erro inesperado.');
+  return data;
+}
+
+const ICONS = {
+  home: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  bag: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  chat: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+  bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  cart: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+  left: '<polyline points="15 18 9 12 15 6"/>',
+  right: '<polyline points="9 18 15 12 9 6"/>',
+  play: '<polygon points="5 3 19 12 5 21 5 3"/>',
+  back: '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+};
+const icon = (name, size = 20) =>
+  `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+
+/* ============================== estado ============================== */
+const S = {
+  q: '', genre: '', sort: 'rating', libTab: 'all',
+  cart: [], favorites: new Set(), liked: new Set(),
+  profile: { name: 'Jogador', reduceMotion: false },
+  notes: [], unread: 0, history: [],
+};
+try { S.cart = JSON.parse(localStorage.getItem('life-cart') || '[]'); } catch (e) { S.cart = []; }
+if (!Array.isArray(S.cart)) S.cart = [];
+
+const gamesById = new Map();
+async function getGames(query = '') {
+  const list = await api('/api/games' + query);
+  list.forEach((g) => gamesById.set(g.id, g));
+  return list;
+}
+
+const downloads = new Map(); // id -> { pct, title, size, speed, dur }
+let timers = [];
+const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
+const clearTimers = () => { timers.forEach(clearInterval); timers = []; };
+
+let renderId = 0;
+let current = { name: '', arg: '' };
+const setView = (rid, html) => {
+  if (rid !== renderId) return false;
+  $view.innerHTML = html;
+  return true;
+};
+
+function saveCart() {
+  try { localStorage.setItem('life-cart', JSON.stringify(S.cart)); } catch (e) { /* sem armazenamento */ }
+  updateBadge();
+}
+function updateBadge() {
+  const b = document.getElementById('cart-badge');
+  b.textContent = S.cart.length;
+  b.hidden = S.cart.length === 0;
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+function notify(text) {
+  S.notes.unshift({ text, time: new Date() });
+  S.notes = S.notes.slice(0, 8);
+  S.unread++;
+  document.getElementById('bell-dot').hidden = false;
+  if (!document.getElementById('notes').hidden) paintNotes();
+}
+function paintNotes() {
+  const el = document.getElementById('notes');
+  const fmt = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  el.innerHTML = '<h4>Notificações</h4>' + (S.notes.length
+    ? S.notes.map((n) => `<div class="note">${esc(n.text)}<small>${fmt(n.time)}</small></div>`).join('')
+    : '<div class="none">Nada por aqui ainda.</div>');
+}
+
+/* ========================= pedaços de interface ========================= */
+function art(g, cls = '') {
+  return `<div class="art ${cls}" style="--c1:${esc(g.colors[0])};--c2:${esc(g.colors[1])}"><span class="art-emoji">${esc(g.emoji)}</span><span class="art-title">${esc(g.title)}</span></div>`;
+}
+
+function priceHTML(g) {
+  if (g.price === 0) return '<span class="price">Grátis</span>';
+  return `${g.discount ? `<span class="disc-badge">-${g.discount}%</span><span class="old">${brl(g.originalPrice)}</span>` : ''}<span class="price">${brl(g.price)}</span>`;
+}
+
+function card(g, i = 0) {
+  return `<article class="card reveal" style="--i:${i}" data-action="open" data-id="${esc(g.id)}">
+    <div class="card-art">${art(g)}${g.discount ? `<span class="disc">-${g.discount}%</span>` : ''}</div>
+    <div class="card-body">
+      <div class="card-title">${esc(g.title)}</div>
+      <div class="card-sub">${esc(g.genres[0] || '')}</div>
+      <div class="card-price">${priceHTML(g)}</div>
+    </div>
+  </article>`;
+}
+
+function avatar(name, status, cls = '') {
+  const h = Math.abs([...String(name)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)) % 360;
+  return `<span class="avatar ${cls}" style="--h:${h}">${esc(String(name).charAt(0).toUpperCase())}${status ? `<i class="dot ${esc(status)}"></i>` : ''}</span>`;
+}
+
+function statusText(f) {
+  const g = f.game && gamesById.get(f.game);
+  if (f.status === 'ingame') return `Jogando ${g ? g.title : 'um jogo'}`;
+  if (f.status === 'menu') return `No menu principal${g ? ' · ' + g.title : ''}`;
+  if (f.status === 'online') return 'Online';
+  if (f.status === 'away') return 'Ausente';
+  return `Offline ${f.lastSeen || ''}`.trim();
+}
+
+function friendRow(f, i) {
+  const g = f.game && gamesById.get(f.game);
+  const text = esc(statusText(f));
+  const stat = g
+    ? `<a class="fstat" href="#/game/${enc(g.id)}">${text}</a>`
+    : `<span class="fstat">${text}</span>`;
+  return `<div class="friend reveal" style="--i:${i}">${avatar(f.name, f.status, 'lg')}<div><div class="fname">${esc(f.name)}</div>${stat}</div></div>`;
+}
+
+function countUp(el, to, fmt = (n) => String(Math.round(n)), dur = 900) {
+  if (S.profile.reduceMotion) { el.textContent = fmt(to); return; }
+  const t0 = performance.now();
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur);
+    el.textContent = fmt(to * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function placeTabIndicator() {
+  const tabs = document.querySelector('.tabs');
+  if (!tabs) return;
+  const on = tabs.querySelector('.tab.on');
+  const ind = tabs.querySelector('.tab-ind');
+  if (!on || !ind) return;
+  ind.style.width = on.offsetWidth + 'px';
+  ind.style.transform = `translateX(${on.offsetLeft}px)`;
+}
+
+/* ============================== navegação ============================== */
+const NAV = [
+  ['', 'home', 'Início'],
+  ['store', 'bag', 'Loja'],
+  ['library', 'grid', 'Biblioteca'],
+  ['friends', 'users', 'Amigos'],
+  ['community', 'chat', 'Comunidade'],
+  ['downloads', 'download', 'Downloads'],
+  ['publish', 'plus', 'Publicar jogo'],
+];
+
+function buildChrome() {
+  document.getElementById('nav').innerHTML =
+    '<span class="nav-ind" id="nav-ind"></span>' +
+    NAV.map(([r, ic, label]) => `<a class="nav-link" href="#/${r}" data-nav="${r}" title="${label}" aria-label="${label}">${icon(ic)}<span>${label}</span></a>`).join('') +
+    '<span class="nav-spacer"></span><div id="mini-dl"></div>' +
+    `<a class="nav-link" href="#/settings" data-nav="settings" title="Configurações" aria-label="Configurações">${icon('sliders')}<span>Configurações</span></a>`;
+  document.getElementById('search-ico').innerHTML = icon('search', 18);
+  document.getElementById('bell-ico').innerHTML = icon('bell');
+  document.getElementById('cart-ico').innerHTML = icon('cart');
+}
+
+function updateNav(name) {
+  const key = name === 'game' ? 'store' : name;
+  let active = null;
+  document.querySelectorAll('.nav-link').forEach((a) => {
+    const on = a.dataset.nav === key;
+    a.classList.toggle('active', on);
+    if (on) active = a;
+  });
+  const ind = document.getElementById('nav-ind');
+  if (active && ind) {
+    ind.classList.add('on');
+    ind.style.height = active.offsetHeight + 'px';
+    ind.style.transform = `translateY(${active.offsetTop}px)`;
+  } else if (ind) {
+    ind.classList.remove('on');
+  }
+}
+
+function applyProfile() {
+  document.body.classList.toggle('reduce-motion', !!S.profile.reduceMotion);
+  document.getElementById('profile-chip').innerHTML =
+    `${avatar(S.profile.name, '')}<span class="ptext"><div class="pname">${esc(S.profile.name)}</div><div class="pstat">Online</div></span>`;
+}
+
+/* =============================== telas =============================== */
+async function homeView() {
+  const rid = renderId;
+  const [games, lib] = await Promise.all([getGames(), api('/api/library')]);
+  const owned = new Set(lib.map((e) => e.id));
+  const feat = games.filter((g) => g.featured);
+  const heroList = feat.length ? feat : games.slice(0, 4);
+  const top = [...games].sort((a, b) => b.rating - a.rating).slice(0, 3);
+  const deals = games.filter((g) => g.discount > 0).sort((a, b) => b.discount - a.discount).slice(0, 5);
+  const best = [...games].sort((a, b) => b.rating - a.rating).slice(0, 5);
+  const wish = games.filter((g) => S.favorites.has(g.id) && !owned.has(g.id)).slice(0, 5);
+
+  const slides = heroList.map((g, i) => {
+    const own = owned.has(g.id);
+    return `<article class="hero-slide ${i === 0 ? 'on' : ''}" style="--c1:${esc(g.colors[0])};--c2:${esc(g.colors[1])}">
+      <div class="hero-bg"></div>
+      <span class="hero-emoji">${esc(g.emoji)}</span>
+      <div class="hero-copy">
+        <span class="pill">Em destaque</span>
+        <h2 class="hero-title">${esc(g.title)}</h2>
+        <div class="hero-meta">${g.genres.map(esc).join(' · ')} · ${g.rating}% positivas</div>
+        <p class="hero-tag">${esc(g.tagline)}</p>
+        <div class="hero-price">${priceHTML(g)}</div>
+        <div class="hero-actions">
+          ${own
+            ? `<button class="btn lg" data-action="open" data-id="${esc(g.id)}">Na biblioteca</button>`
+            : `<button class="btn lg" data-action="buy-now" data-id="${esc(g.id)}">${g.price === 0 ? 'Obter grátis' : 'Comprar agora'}</button>`}
+          <button class="btn ghost lg" data-action="open" data-id="${esc(g.id)}">Ver jogo</button>
+          <button class="icon-btn heart ${S.favorites.has(g.id) ? 'on' : ''}" data-action="fav" data-id="${esc(g.id)}" aria-label="Favoritar">${icon('heart')}</button>
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+
+  const html = `
+    <div class="home-top reveal" style="--i:0">
+      <div class="hero" id="hero">
+        ${slides}
+        <div class="dots" id="dots">${heroList.map((_, i) => `<button class="dot-b ${i === 0 ? 'on' : ''}" data-action="hero" data-to="${i}" aria-label="Destaque ${i + 1}"></button>`).join('')}</div>
+        <div class="hero-nav">
+          <button class="icon-btn" data-action="hero" data-to="prev" aria-label="Anterior">${icon('left')}</button>
+          <button class="icon-btn" data-action="hero" data-to="next" aria-label="Próximo">${icon('right')}</button>
+        </div>
+      </div>
+      <div class="side-list">
+        ${top.map((g) => `<div class="side-tile" data-action="open" data-id="${esc(g.id)}">${art(g)}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="section-head reveal" style="--i:2"><h2>Ofertas em destaque</h2><a href="#/store">Ver mais →</a></div>
+    <div class="grid five">${deals.map((g, i) => card(g, i + 3)).join('')}</div>
+
+    <div class="section-head reveal" style="--i:8"><h2>Mais bem avaliados</h2><a href="#/store">Ver mais →</a></div>
+    <div class="grid five">${best.map((g, i) => card(g, i + 9)).join('')}</div>
+
+    ${wish.length ? `<div class="section-head reveal" style="--i:14"><h2>Sua lista de desejos</h2></div>
+    <div class="grid five">${wish.map((g, i) => card(g, i + 15)).join('')}</div>` : ''}`;
+  if (!setView(rid, html)) return;
+  initHero(heroList.length);
+}
+
+let heroCtl = null;
+function initHero(n) {
+  const hero = document.getElementById('hero');
+  if (!hero || n === 0) return;
+  let idx = 0;
+  const slides = [...hero.querySelectorAll('.hero-slide')];
+  const dots = [...hero.querySelectorAll('.dot-b')];
+  const show = (to) => {
+    idx = ((to % n) + n) % n;
+    slides.forEach((s, i) => s.classList.toggle('on', i === idx));
+    dots.forEach((d, i) => {
+      d.classList.remove('on');
+      if (i === idx) { void d.offsetWidth; d.classList.add('on'); }
+    });
+  };
+  let timer = every(() => { if (!hero.matches(':hover')) show(idx + 1); }, 7000);
+  heroCtl = {
+    go(to) {
+      show(to === 'next' ? idx + 1 : to === 'prev' ? idx - 1 : Number(to));
+      clearInterval(timer);
+      timer = every(() => { if (!hero.matches(':hover')) show(idx + 1); }, 7000);
+    },
+  };
+}
+
+async function storeView() {
+  const rid = renderId;
+  const genres = await api('/api/genres');
+  const html = `
+    <div class="page-head reveal" style="--i:0"><h1>Loja</h1>
+      <label class="muted">Ordenar por
+        <select id="sort">
+          ${[['rating', 'Melhor avaliados'], ['discount', 'Maiores descontos'], ['new', 'Lançamentos'], ['price-asc', 'Menor preço'], ['price-desc', 'Maior preço'], ['az', 'A-Z']]
+            .map(([v, l]) => `<option value="${v}" ${S.sort === v ? 'selected' : ''}>${l}</option>`).join('')}
+        </select></label>
+    </div>
+    <div class="chips reveal" style="--i:1" id="chips">
+      <button class="chip ${S.genre === '' ? 'on' : ''}" data-action="genre" data-genre="">Todos</button>
+      ${genres.map((x) => `<button class="chip ${S.genre === x ? 'on' : ''}" data-action="genre" data-genre="${esc(x)}">${esc(x)}</button>`).join('')}
+    </div>
+    <div id="grid" class="grid"></div>`;
+  if (!setView(rid, html)) return;
+  document.getElementById('sort').addEventListener('change', (e) => { S.sort = e.target.value; loadGrid(); });
+  await loadGrid();
+}
+
+async function loadGrid() {
+  const params = new URLSearchParams({ q: S.q, genre: S.genre, sort: S.sort });
+  const games = await getGames('?' + params);
+  const grid = document.getElementById('grid');
+  if (!grid) return;
+  grid.innerHTML = games.length
+    ? games.map((g, i) => card(g, Math.min(i, 10))).join('')
+    : `<div class="empty" style="grid-column:1/-1"><div class="big">${icon('search', 34)}</div>Nenhum jogo encontrado.</div>`;
+  document.querySelectorAll('#chips .chip').forEach((c) => c.classList.toggle('on', c.dataset.genre === S.genre));
+}
+
+function paintLibrary(items) {
+  const list = document.getElementById('lib-list');
+  if (!list) return;
+  const shown = items.filter((e) => S.libTab === 'all' || (S.libTab === 'installed' && e.installed) || (S.libTab === 'favorites' && S.favorites.has(e.id)));
+  if (!shown.length) {
+    list.innerHTML = `<div class="empty"><div class="big">${icon('grid', 34)}</div>${S.libTab === 'all' ? 'Você ainda não tem jogos.' : 'Nada aqui por enquanto.'}<a class="btn sm" href="#/store">Ir para a loja</a></div>`;
+    return;
+  }
+  list.innerHTML = shown.map((e, i) => {
+    const g = e.game;
+    const dl = downloads.get(g.id);
+    let actions;
+    if (dl) {
+      actions = `<div class="dl-wrap"><span class="bar"><i data-dl-bar="${esc(g.id)}" style="width:${dl.pct}%"></i></span><small><span data-dl-pct="${esc(g.id)}">${Math.round(dl.pct)}%</span><span data-dl-info="${esc(g.id)}"></span></small></div>`;
+    } else if (e.installed) {
+      actions = `<button class="btn" data-action="play" data-id="${esc(g.id)}">${icon('play', 16)} Jogar</button>`;
+    } else {
+      actions = `<button class="btn ghost" data-action="install" data-id="${esc(g.id)}">${icon('download', 16)} Instalar</button>`;
+    }
+    return `<div class="row reveal" style="--i:${Math.min(i, 10)}">
+      <div class="thumb">${art(g, 'thumb')}</div>
+      <div class="grow"><div class="rtitle" data-action="open" data-id="${esc(g.id)}">${esc(g.title)}</div>
+        <div class="muted">${esc(g.sizeGB)} GB · ${e.installed ? 'Instalado' : 'Não instalado'}${e.playMinutes ? ' · ' + hours(e.playMinutes) + ' jogadas' : ''}</div></div>
+      <div class="actions">${actions}
+        <button class="icon-btn heart ${S.favorites.has(g.id) ? 'on' : ''}" data-action="fav" data-id="${esc(g.id)}" aria-label="Favoritar">${icon('heart')}</button></div>
+    </div>`;
+  }).join('');
+}
+
+let libItems = [];
+async function libraryView() {
+  const rid = renderId;
+  libItems = await api('/api/library');
+  libItems.forEach((e) => gamesById.set(e.id, e.game));
+  libItems.forEach((e) => { if (e.favorite) S.favorites.add(e.id); });
+  const installed = libItems.filter((e) => e.installed).length;
+  const minutes = libItems.reduce((s, e) => s + e.playMinutes, 0);
+  const favs = libItems.filter((e) => S.favorites.has(e.id)).length;
+  const html = `
+    <div class="page-head reveal" style="--i:0"><h1>Biblioteca</h1></div>
+    <div class="stats reveal" style="--i:1">
+      <div class="stat"><b data-count="${libItems.length}">0</b><span>jogos</span></div>
+      <div class="stat"><b data-count="${installed}">0</b><span>instalados</span></div>
+      <div class="stat"><b data-count="${Math.round(minutes / 6) / 10}" data-dec="1">0</b><span>horas jogadas</span></div>
+    </div>
+    <div class="tabs reveal" style="--i:2">
+      <span class="tab-ind"></span>
+      <button class="tab ${S.libTab === 'all' ? 'on' : ''}" data-action="lib-tab" data-tab="all">Todos os jogos</button>
+      <button class="tab ${S.libTab === 'installed' ? 'on' : ''}" data-action="lib-tab" data-tab="installed">Instalados (${installed})</button>
+      <button class="tab ${S.libTab === 'favorites' ? 'on' : ''}" data-action="lib-tab" data-tab="favorites">Favoritos (${favs})</button>
+    </div>
+    <div id="lib-list"></div>`;
+  if (!setView(rid, html)) return;
+  paintLibrary(libItems);
+  placeTabIndicator();
+  $view.querySelectorAll('[data-count]').forEach((el) => {
+    const dec = el.dataset.dec ? Number(el.dataset.dec) : 0;
+    countUp(el, Number(el.dataset.count), (n) => n.toFixed(dec).replace('.', ','));
+  });
+}
+
+async function gameView(id) {
+  const rid = renderId;
+  const [g, lib, friends] = await Promise.all([
+    api('/api/games/' + enc(id)),
+    api('/api/library'),
+    api('/api/games/' + enc(id) + '/friends'),
+  ]);
+  gamesById.set(g.id, g);
+  const entry = lib.find((e) => e.id === g.id);
+  const dl = downloads.get(g.id);
+  const inCart = S.cart.includes(g.id);
+  const fav = S.favorites.has(g.id);
+  const heart = `<button class="icon-btn heart ${fav ? 'on' : ''}" data-action="fav" data-id="${esc(g.id)}" aria-label="Favoritar">${icon('heart')}</button>`;
+
+  let actions;
+  if (entry && dl) {
+    actions = `<div class="dl-wrap"><span class="bar"><i data-dl-bar="${esc(g.id)}" style="width:${dl.pct}%"></i></span><small><span data-dl-pct="${esc(g.id)}">${Math.round(dl.pct)}%</span><span data-dl-info="${esc(g.id)}"></span></small></div>${heart}`;
+  } else if (entry && entry.installed) {
+    actions = `<button class="btn lg" data-action="play" data-id="${esc(g.id)}">${icon('play', 18)} Jogar</button>
+      <button class="btn ghost" data-action="uninstall" data-id="${esc(g.id)}">${icon('trash', 16)} Desinstalar</button>${heart}`;
+  } else if (entry) {
+    actions = `<button class="btn lg" data-action="install" data-id="${esc(g.id)}">${icon('download', 18)} Instalar (${esc(g.sizeGB)} GB)</button>${heart}`;
+  } else {
+    actions = `<span class="buyline" style="margin:0">${priceHTML(g)}</span>
+      ${inCart ? '<a class="btn ghost" href="#/cart">No carrinho — ver</a>'
+               : `<button class="btn ghost" data-action="add-cart" data-id="${esc(g.id)}">${g.price === 0 ? 'Adicionar' : 'Adicionar ao carrinho'}</button>`}
+      <button class="btn lg" data-action="buy-now" data-id="${esc(g.id)}">${g.price === 0 ? 'Obter grátis' : 'Comprar'}</button>${heart}`;
+  }
+
+  const achIcons = ['🏆', '⭐', '🔥', '💎', '🎯', '⚡', '👑'];
+  const unlocked = entry ? entry.achievementsUnlocked : 0;
+  const achPanel = entry ? `
+    <div class="panel reveal" style="--i:3">
+      <h3>Conquistas <span class="muted">${unlocked}/${g.achievementsTotal}</span></h3>
+      <span class="bar"><i style="width:${Math.round((unlocked / g.achievementsTotal) * 100)}%;transition:none"></i></span>
+      <div class="badges">${achIcons.map((ic, i) => `<span class="achv ${i < unlocked ? 'on' : ''}" title="Conquista ${i + 1}">${ic}</span>`).join('')}</div>
+      <p class="muted" style="margin-top:12px">Tempo de jogo: ${entry.playMinutes ? hours(entry.playMinutes) : 'ainda não jogou'}</p>
+    </div>` : `
+    <div class="shots reveal" style="--i:3;grid-column:1/-1;margin-top:0">
+      ${[0, 1, 2].map((k) => `<div class="shot">${art({ ...g, emoji: ['🌄', g.emoji, '✨'][k], title: '', colors: k === 1 ? g.colors : [g.colors[1], g.colors[0]] }, 'small')}</div>`).join('')}
+    </div>`;
+
+  const friendsPanel = `
+    <div class="panel reveal" style="--i:4">
+      <h3>Amigos que jogam <span class="muted">${friends.length}</span></h3>
+      ${friends.length ? friends.map((f) => `<div class="friend-line">${avatar(f.name, f.status)}<div><b>${esc(f.name)}</b><div class="muted" style="font-size:13px">${esc(statusText(f))}</div></div></div>`).join('')
+        : '<p class="muted">Nenhum amigo seu joga este jogo ainda.</p>'}
+    </div>`;
+
+  const reqRows = (r) => [['Sistema', r.so], ['Processador', r.cpu], ['Memória', r.ram], ['Placa de vídeo', r.gpu], ['Armazenamento', r.disco]]
+    .map(([k, v]) => `<div class="req-row"><span>${k}</span><span>${esc(v)}</span></div>`).join('');
+
+  const html = `
+    <a class="back reveal" style="--i:0" href="#/store" data-action="back">${icon('back', 18)} Voltar</a>
+    <div class="banner reveal" style="--i:1;--c1:${esc(g.colors[0])};--c2:${esc(g.colors[1])}">
+      <div class="hero-bg"></div><span class="hero-emoji">${esc(g.emoji)}</span>
+    </div>
+    <div class="game-head reveal" style="--i:2">
+      <div class="cover">${art(g)}</div>
+      <div class="ginfo">
+        <h1>${esc(g.title)}</h1>
+        <div class="muted">${esc(g.developer)} · ${esc(g.releaseDate)} · ${g.rating > 0 ? g.rating + '% positivas' : 'sem avaliações'}</div>
+        <div>${g.genres.map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div>
+        <div class="buyline">${actions}</div>
+      </div>
+    </div>
+    <div class="two-col">
+      ${achPanel}
+      ${friendsPanel}
+    </div>
+    <div class="panel reveal" style="--i:5;margin-top:18px">
+      <h3>Sobre o jogo</h3>
+      <p style="line-height:1.6">${esc(g.description)}</p>
+    </div>
+    <div class="panel reveal" style="--i:6;margin-top:18px">
+      <h3>Requisitos de sistema</h3>
+      <div class="req-tabs">
+        <button class="chip on" data-action="req-tab" data-tab="min">Mínimos</button>
+        <button class="chip" data-action="req-tab" data-tab="rec">Recomendados</button>
+      </div>
+      <div class="req-panel on" data-req="min">${reqRows(g.requirements.min)}</div>
+      <div class="req-panel" data-req="rec">${reqRows(g.requirements.rec)}</div>
+    </div>`;
+  setView(rid, html);
+}
+
+async function cartView() {
+  const rid = renderId;
+  const games = await getGames();
+  const items = S.cart.map((id) => games.find((g) => g.id === id)).filter(Boolean);
+  if (items.length !== S.cart.length) { S.cart = items.map((g) => g.id); saveCart(); }
+  if (!items.length) {
+    setView(rid, `<h1 class="reveal">Carrinho</h1><div class="empty reveal" style="--i:1"><div class="big">${icon('cart', 34)}</div>Seu carrinho está vazio.<a class="btn sm" href="#/store">Ir para a loja</a></div>`);
+    return;
+  }
+  const total = items.reduce((s, g) => s + g.price, 0);
+  setView(rid, `
+    <h1 class="reveal" style="margin-bottom:20px">Carrinho</h1>
+    ${items.map((g, i) => `<div class="row reveal" style="--i:${i + 1}">
+      <div class="thumb">${art(g, 'thumb')}</div>
+      <div class="grow"><div class="rtitle" data-action="open" data-id="${esc(g.id)}">${esc(g.title)}</div><div class="muted">${esc(g.developer)}</div></div>
+      <div class="card-price" style="margin:0">${priceHTML(g)}</div>
+      <button class="btn ghost sm" data-action="remove-cart" data-id="${esc(g.id)}">Remover</button>
+    </div>`).join('')}
+    <div class="total reveal" style="--i:${items.length + 1}"><span>Total: <b>${brl(total)}</b></span><button class="btn lg" data-action="buy">Finalizar compra (simulada)</button></div>
+    <p class="note-line">Compra de demonstração: nenhum pagamento real é feito.</p>`);
+}
+
+async function friendsView() {
+  const rid = renderId;
+  const [friends] = await Promise.all([api('/api/friends'), getGames()]);
+  const paint = () => {
+    const q = (document.getElementById('fsearch') || { value: '' }).value.trim().toLowerCase();
+    const list = friends.filter((f) => f.name.toLowerCase().includes(q));
+    const on = list.filter((f) => f.status !== 'offline');
+    const off = list.filter((f) => f.status === 'offline');
+    document.getElementById('flist').innerHTML =
+      `<h2 style="margin:6px 0 12px">Online (${on.length})</h2>${on.map(friendRow).join('') || '<p class="muted">Ninguém online.</p>'}
+       <h2 style="margin:26px 0 12px">Offline (${off.length})</h2>${off.map(friendRow).join('') || '<p class="muted">Ninguém offline.</p>'}`;
+  };
+  const html = `<div class="page-head reveal" style="--i:0"><h1>Amigos</h1></div>
+    <p class="muted reveal" style="--i:1;margin:-8px 0 16px">Amigos de exemplo (fictícios).</p>
+    <label class="search reveal" style="--i:1;max-width:420px;margin-bottom:20px">${icon('search', 18)}<input id="fsearch" type="search" placeholder="Buscar amigos..." autocomplete="off"></label>
+    <div id="flist"></div>`;
+  if (!setView(rid, html)) return;
+  document.getElementById('fsearch').addEventListener('input', paint);
+  paint();
+}
+
+async function communityView() {
+  const rid = renderId;
+  const [posts] = await Promise.all([api('/api/community'), getGames()]);
+  const html = `<div class="page-head reveal" style="--i:0"><h1>Comunidade</h1></div>
+    <p class="muted reveal" style="--i:1;margin:-8px 0 16px">Posts de exemplo (fictícios).</p>
+    ${posts.map((p, i) => {
+      const g = gamesById.get(p.game);
+      const liked = S.liked.has(p.id);
+      return `<article class="post reveal" style="--i:${i + 1}">
+        <div class="post-head">${avatar(p.author, '', 'lg')}<div><b>${esc(p.author)}</b><div class="muted" style="font-size:13px">${esc(p.time)}${g ? ' · em <a href="#/game/' + enc(g.id) + '" style="color:#c4b5fd">' + esc(g.title) + '</a>' : ''}</div></div></div>
+        <p>${esc(p.text)}</p>
+        <button class="like ${liked ? 'on' : ''}" data-action="like" data-id="${esc(p.id)}" data-base="${p.likes}">${icon('heart', 16)}<span>${p.likes + (liked ? 1 : 0)}</span></button>
+      </article>`;
+    }).join('')}`;
+  setView(rid, html);
+}
+
+function dlInfo(d) {
+  const left = Math.max(0, (d.size * 1024 * (1 - d.pct / 100)) / d.speed);
+  return `${d.speed.toFixed(0)} MB/s · ${left < 60 ? Math.ceil(left) + ' s' : Math.ceil(left / 60) + ' min'} restantes`;
+}
+
+function downloadsViewHTML() {
+  const active = [...downloads.entries()];
+  const live = active.length
+    ? active.map(([id, d], i) => `<div class="row reveal" style="--i:${i + 1}">
+        <div class="thumb">${art(gamesById.get(id) || { colors: ['#333', '#111'], emoji: '🎮', title: '' }, 'thumb')}</div>
+        <div class="grow"><div class="rtitle" data-action="open" data-id="${esc(id)}">${esc(d.title)}</div>
+          <div class="dl-wrap" style="margin-top:6px"><span class="bar"><i data-dl-bar="${esc(id)}" style="width:${d.pct}%"></i></span>
+          <small><span data-dl-pct="${esc(id)}">${Math.round(d.pct)}%</span><span data-dl-info="${esc(id)}">${esc(dlInfo(d))}</span></small></div></div>
+      </div>`).join('')
+    : `<div class="empty"><div class="big">${icon('download', 34)}</div>Nenhum download em andamento.<a class="btn sm" href="#/library">Ir para a biblioteca</a></div>`;
+  const done = S.history.length
+    ? S.history.map((h) => `<div class="row"><div class="grow"><b>${esc(h.title)}</b><div class="muted">${esc(h.size)} GB · concluído às ${esc(h.at)}</div></div><span class="tag">Instalado</span></div>`).join('')
+    : '<p class="muted">Nada concluído nesta sessão.</p>';
+  return `<div class="page-head reveal" style="--i:0"><h1>Downloads</h1></div>
+    <h2 style="margin-bottom:12px">Em andamento</h2>${live}
+    <h2 style="margin:28px 0 12px">Concluídos</h2>${done}`;
+}
+async function downloadsView() {
+  const rid = renderId;
+  await getGames();
+  setView(rid, downloadsViewHTML());
+}
+
+function publishView(errorMsg) {
+  const rid = renderId;
+  setView(rid, `
+    <h1 class="reveal">Publicar jogo</h1>
+    <p class="muted reveal" style="--i:1;margin:6px 0 20px">Portal do desenvolvedor (protótipo). Numa loja real, aqui entram o envio do jogo, a verificação de segurança e o contrato.</p>
+    ${errorMsg ? `<p class="error">${esc(errorMsg)}</p>` : ''}
+    <form id="publish-form" class="reveal" style="--i:2">
+      <label class="f">Título<input type="text" name="title" maxlength="60" required></label>
+      <label class="f">Desenvolvedor / estúdio<input type="text" name="developer" maxlength="60" required></label>
+      <label class="f">Frase de destaque (opcional)<input type="text" name="tagline" maxlength="100"></label>
+      <label class="f">Descrição<textarea name="description" maxlength="1000" required></textarea></label>
+      <label class="f">Gêneros (separados por vírgula)<input type="text" name="genres" placeholder="Ação, Aventura" required></label>
+      <div class="two">
+        <label class="f">Preço (R$, use 0 para grátis)<input type="number" name="price" min="0" max="1000" step="0.01" value="0" required></label>
+        <label class="f">Tamanho (GB)<input type="number" name="sizeGB" min="0.1" max="200" step="0.1" value="1" required></label>
+      </div>
+      <div><button class="btn lg" type="submit">Publicar na loja</button></div>
+    </form>`);
+  document.getElementById('publish-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const body = Object.fromEntries(new FormData(ev.target).entries());
+    try {
+      const game = await api('/api/games', { method: 'POST', body });
+      toast('Jogo publicado na loja.');
+      notify(`"${game.title}" foi publicado.`);
+      location.hash = '#/game/' + enc(game.id);
+    } catch (err) {
+      publishView(err.message);
+    }
+  });
+}
+
+async function settingsView() {
+  const rid = renderId;
+  const demo = window.LIFE_DEMO
+    ? `<div class="panel reveal" style="--i:3;margin-top:18px;max-width:620px">
+        <h3>Versão online de demonstração</h3>
+        <p class="muted">Nesta página a loja funciona dentro do seu navegador. O que você compra, favorita ou publica fica só aqui e não aparece para outras pessoas.</p>
+        <div style="margin-top:14px"><button class="btn ghost" data-action="demo-reset">Restaurar dados de exemplo</button></div>
+      </div>`
+    : '';
+  const html = `<h1 class="reveal">Configurações</h1>
+    <div class="panel reveal" style="--i:1;margin-top:18px;max-width:620px">
+      <h3>Perfil</h3>
+      <form id="profile-form" style="max-width:none">
+        <label class="f">Nome de exibição<input type="text" name="name" maxlength="24" value="${esc(S.profile.name)}" required></label>
+        <div><button class="btn" type="submit">Salvar</button></div>
+      </form>
+    </div>
+    <div class="panel reveal" style="--i:2;margin-top:18px;max-width:620px">
+      <h3>Aparência</h3>
+      <label class="switch"><span><b>Reduzir animações</b><div class="muted" style="font-size:13px">Desliga movimentos e transições da interface.</div></span>
+        <input type="checkbox" id="reduce" ${S.profile.reduceMotion ? 'checked' : ''}><span class="track"></span></label>
+    </div>
+    ${demo}
+    <div class="panel reveal" style="--i:4;margin-top:18px;max-width:620px">
+      <h3>Sobre</h3>
+      <p class="muted">Life · protótipo v0.2. Os jogos, amigos e posts são fictícios, o pagamento é simulado e nenhum arquivo de jogo é baixado de verdade.</p>
+    </div>`;
+  if (!setView(rid, html)) return;
+  document.getElementById('profile-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const name = new FormData(ev.target).get('name');
+    try {
+      S.profile = await api('/api/profile', { method: 'PUT', body: { name } });
+      applyProfile();
+      toast('Perfil salvo.');
+    } catch (err) { toast(err.message); }
+  });
+  document.getElementById('reduce').addEventListener('change', async (ev) => {
+    try {
+      S.profile = await api('/api/profile', { method: 'PUT', body: { reduceMotion: ev.target.checked } });
+      applyProfile();
+    } catch (err) { toast(err.message); }
+  });
+}
+
+/* ============================== downloads ============================== */
+function renderMini() {
+  const el = document.getElementById('mini-dl');
+  if (!el) return;
+  if (!downloads.size) { el.classList.remove('on'); el.innerHTML = ''; return; }
+  const [id, d] = downloads.entries().next().value;
+  el.classList.add('on');
+  el.innerHTML = `<a href="#/downloads" class="mini-card"><span class="mini-t">${icon('download', 16)} ${esc(d.title)}</span><span class="bar"><i data-dl-bar="${esc(id)}" style="width:${d.pct}%"></i></span><span class="mini-s" data-dl-pct="${esc(id)}">${Math.round(d.pct)}%</span></a>`;
+}
+
+function paintDownloads() {
+  downloads.forEach((d, id) => {
+    document.querySelectorAll(`[data-dl-bar="${id}"]`).forEach((b) => { b.style.width = d.pct + '%'; });
+    document.querySelectorAll(`[data-dl-pct="${id}"]`).forEach((b) => { b.textContent = Math.round(d.pct) + '%'; });
+    document.querySelectorAll(`[data-dl-info="${id}"]`).forEach((b) => { b.textContent = dlInfo(d); });
+  });
+}
+
+function startDownload(id) {
+  if (downloads.has(id)) return;
+  const g = gamesById.get(id);
+  const size = g ? g.sizeGB : 5;
+  const dur = Math.min(12, Math.max(4, 3 + size / 6)); // segundos
+  const d = { pct: 0, title: g ? g.title : id, size, speed: 40 + Math.random() * 50, dur };
+  downloads.set(id, d);
+  renderMini();
+  refreshView();
+  const timer = setInterval(async () => {
+    d.pct = Math.min(100, d.pct + (100 / (dur * 4)) * (0.8 + Math.random() * 0.4));
+    d.speed = Math.max(20, d.speed + (Math.random() - 0.5) * 8);
+    paintDownloads();
+    if (d.pct < 100) return;
+    clearInterval(timer);
+    try { await api('/api/library/' + enc(id) + '/install', { method: 'POST' }); }
+    catch (err) { toast(err.message); }
+    downloads.delete(id);
+    S.history.unshift({ title: d.title, size: String(d.size), at: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) });
+    notify(`${d.title} foi instalado.`);
+    toast(`${d.title} instalado.`);
+    renderMini();
+    refreshView();
+  }, 250);
+}
+
+/* =============================== roteador =============================== */
+const ROUTES = {
+  '': homeView, store: storeView, library: libraryView, friends: friendsView, community: communityView,
+  downloads: downloadsView, cart: cartView, publish: () => publishView(), settings: settingsView, game: gameView,
+};
+
+async function render({ animate = true } = {}) {
+  const parts = location.hash.replace(/^#/, '').split('/'); // "/game/abc" -> ["", "game", "abc"]
+  const name = parts[1] || '';
+  const arg = parts[2] ? decodeURIComponent(parts[2]) : '';
+  current = { name, arg };
+  renderId++;
+  clearTimers();
+  heroCtl = null;
+  updateNav(name);
+  updateBadge();
+  $view.classList.toggle('view-enter', animate);
+  try {
+    await (ROUTES[name] || homeView)(arg);
+    if (animate) $content.scrollTo({ top: 0, behavior: 'auto' });
+  } catch (err) {
+    $view.innerHTML = `<div class="empty error">${esc(err.message)}</div>`;
+  }
+}
+
+// Atualiza a tela atual sem repetir a animação de entrada
+function refreshView() {
+  if (['library', 'downloads', 'game', 'cart'].includes(current.name)) return render({ animate: false });
+}
+
+window.addEventListener('hashchange', () => render());
+
+/* ================================ ações ================================ */
+function pop(el) {
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+document.addEventListener('click', async (ev) => {
+  // fecha o menu de notificações ao clicar fora
+  const notesEl = document.getElementById('notes');
+  if (!notesEl.hidden && !ev.target.closest('.notes-wrap')) notesEl.hidden = true;
+
+  if (ev.target.closest('#bell')) {
+    notesEl.hidden = !notesEl.hidden;
+    if (!notesEl.hidden) {
+      paintNotes();
+      S.unread = 0;
+      document.getElementById('bell-dot').hidden = true;
+    }
+    return;
+  }
+
+  const el = ev.target.closest('[data-action]');
+  if (!el) return;
+  const id = el.dataset.id;
+  try {
+    switch (el.dataset.action) {
+      case 'open': location.hash = '#/game/' + enc(id); break;
+      case 'back': ev.preventDefault(); if (history.length > 1) history.back(); else location.hash = '#/'; break;
+      case 'genre': S.genre = el.dataset.genre; await loadGrid(); break;
+      case 'hero': if (heroCtl) heroCtl.go(el.dataset.to); break;
+      case 'lib-tab':
+        S.libTab = el.dataset.tab;
+        document.querySelectorAll('.tabs .tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === S.libTab));
+        placeTabIndicator();
+        paintLibrary(libItems);
+        break;
+      case 'req-tab':
+        document.querySelectorAll('[data-action="req-tab"]').forEach((t) => t.classList.toggle('on', t === el));
+        document.querySelectorAll('.req-panel').forEach((p) => p.classList.toggle('on', p.dataset.req === el.dataset.tab));
+        break;
+      case 'add-cart':
+        if (!S.cart.includes(id)) S.cart.push(id);
+        saveCart();
+        toast('Adicionado ao carrinho.');
+        await render({ animate: false });
+        break;
+      case 'buy-now':
+        if (!S.cart.includes(id)) S.cart.push(id);
+        saveCart();
+        location.hash = '#/cart';
+        break;
+      case 'remove-cart':
+        S.cart = S.cart.filter((x) => x !== id);
+        saveCart();
+        await render({ animate: false });
+        break;
+      case 'buy': {
+        const result = await api('/api/purchase', { method: 'POST', body: { ids: S.cart } });
+        S.cart = [];
+        saveCart();
+        toast(`Compra simulada concluída (${brl(result.total)}).`);
+        notify(`Compra de ${result.purchased.length} jogo(s) concluída.`);
+        location.hash = '#/library';
+        break;
+      }
+      case 'install': startDownload(id); break;
+      case 'uninstall':
+        await api('/api/library/' + enc(id) + '/install', { method: 'DELETE' });
+        toast('Jogo desinstalado.');
+        await render({ animate: false });
+        break;
+      case 'play': {
+        const r = await api('/api/library/' + enc(id) + '/play', { method: 'POST' });
+        toast(`Sessão simulada: +${r.minutes} min de jogo.`);
+        if (r.newAchievements > 0) {
+          const g = gamesById.get(id);
+          notify(`Nova conquista em ${g ? g.title : 'um jogo'}! 🏆`);
+          toast(`Nova conquista desbloqueada! 🏆 (+${r.newAchievements})`);
+        }
+        await render({ animate: false });
+        break;
+      }
+      case 'fav': {
+        const on = !S.favorites.has(id);
+        await api('/api/favorites/' + enc(id), { method: on ? 'POST' : 'DELETE' });
+        if (on) S.favorites.add(id); else S.favorites.delete(id);
+        document.querySelectorAll(`[data-action="fav"][data-id="${id}"]`).forEach((b) => { b.classList.toggle('on', on); pop(b); });
+        toast(on ? 'Adicionado aos favoritos.' : 'Removido dos favoritos.');
+        if (current.name === 'library' && S.libTab === 'favorites') await render({ animate: false });
+        break;
+      }
+      case 'like': {
+        const base = Number(el.dataset.base);
+        const on = !S.liked.has(id);
+        if (on) S.liked.add(id); else S.liked.delete(id);
+        el.classList.toggle('on', on);
+        el.querySelector('span').textContent = base + (on ? 1 : 0);
+        pop(el);
+        break;
+      }
+      case 'demo-reset': {
+        if (downloads.size) { toast('Espere os downloads terminarem para restaurar.'); break; }
+        window.LIFE_DEMO.reset();
+        S.cart = []; saveCart();
+        S.favorites = new Set(); S.liked = new Set(); S.history = []; S.notes = []; S.unread = 0;
+        document.getElementById('bell-dot').hidden = true;
+        S.profile = await api('/api/profile');
+        applyProfile();
+        renderMini();
+        toast('Dados de exemplo restaurados.');
+        await render({ animate: false });
+        break;
+      }
+    }
+  } catch (err) {
+    toast(err.message);
+  }
+});
+
+// Efeito de ondas nos botões
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('.btn');
+  if (!b || b.disabled || S.profile.reduceMotion) return;
+  const r = b.getBoundingClientRect();
+  const d = Math.max(r.width, r.height) * 2;
+  const s = document.createElement('span');
+  s.className = 'ripple';
+  s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  b.appendChild(s);
+  setTimeout(() => s.remove(), 700);
+});
+
+// Inclinação 3D suave nos cartões
+$view.addEventListener('mousemove', (e) => {
+  const c = e.target.closest('.card');
+  if (!c || S.profile.reduceMotion) return;
+  const r = c.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width - 0.5;
+  const y = (e.clientY - r.top) / r.height - 0.5;
+  c.style.setProperty('--ry', (x * 8).toFixed(2) + 'deg');
+  c.style.setProperty('--rx', (-y * 8).toFixed(2) + 'deg');
+});
+$view.addEventListener('mouseout', (e) => {
+  const c = e.target.closest('.card');
+  if (c && !c.contains(e.relatedTarget)) {
+    c.style.setProperty('--rx', '0deg');
+    c.style.setProperty('--ry', '0deg');
+  }
+});
+
+// Busca global na barra do topo
+document.getElementById('gsearch').addEventListener('input', (e) => {
+  S.q = e.target.value;
+  if (current.name === 'store') loadGrid();
+  else location.hash = '#/store';
+});
+
+window.addEventListener('resize', () => { updateNav(current.name); placeTabIndicator(); });
+
+/* ================================ início ================================ */
+(async function boot() {
+  buildChrome();
+  try { S.profile = await api('/api/profile'); } catch (e) { /* usa o padrão */ }
+  try { S.favorites = new Set(await api('/api/favorites')); } catch (e) { /* usa o padrão */ }
+  applyProfile();
+  updateBadge();
+  await render();
+})();
+</script>
+
+</body></html>
